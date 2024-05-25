@@ -1,6 +1,7 @@
 app:
   port: 8080
-  storage: postgres # или "inmemory"
+  # storage: postgres
+  storage: inmemory
 
 db:
   host: localhost
