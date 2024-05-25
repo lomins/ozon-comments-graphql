@@ -21,9 +21,23 @@ func main() {
 	if err != nil {
 		log.Fatalf("could not load config: %v", err)
 	}
+	cfg.ParseFlags()
 
-	var store storage.Storage
+	store, err := initializeStorage(cfg)
+	if err != nil {
+		log.Fatalf("could not initialize storage: %v", err)
+	}
 
+	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
+		Storage: store, Comments: make(map[string]chan *model.Comment),
+	}}))
+
+	srv.AddTransport(&transport.Websocket{})
+
+	startServer(cfg.App.Port, srv)
+}
+
+func initializeStorage(cfg *config.Config) (storage.Storage, error) {
 	switch cfg.App.Storage {
 	case "postgres":
 		db, err := gorm.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
@@ -33,23 +47,22 @@ func main() {
 		}
 		defer db.Close()
 
-		store = storage.NewPostgresStorage(db)
+		log.Printf("storage type: %s", cfg.App.Storage)
+		return storage.NewPostgresStorage(db), nil
 	case "inmemory":
-		store = storage.NewInMemoryStorage()
+		log.Printf("storage type: %s", cfg.App.Storage)
+		return storage.NewInMemoryStorage(), nil
 	default:
-		log.Fatalf("unknown storage type: %v", cfg.App.Storage)
+		log.Printf("unknown storage type: %s, defaulting to inmemory", cfg.App.Storage)
+		return storage.NewInMemoryStorage(), nil
 	}
+}
 
-	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Storage: store, Comments: make(map[string]chan *model.Comment),
-	}}))
-
-	srv.AddTransport(&transport.Websocket{})
-
+func startServer(port int, srv *handler.Server) {
 	http.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	http.Handle("/query", srv)
 
-	port := fmt.Sprintf(":%d", cfg.App.Port)
-	log.Printf("connect to http://localhost%s/ for GraphQL playground", port)
-	log.Fatal(http.ListenAndServe(port, nil))
+	address := fmt.Sprintf(":%d", port)
+	log.Printf("connect to http://localhost%s/ for GraphQL playground", address)
+	log.Fatal(http.ListenAndServe(address, nil))
 }
