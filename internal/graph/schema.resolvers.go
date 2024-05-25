@@ -51,6 +51,7 @@ func (r *mutationResolver) CreateComment(ctx context.Context, postID string, par
 
 	r.mu.Lock()
 	if ch, ok := r.Comments[postID]; ok {
+		fmt.Printf("Отправка комментария в канал для postID: %s\n", postID)
 		ch <- commentQL
 	}
 	r.mu.Unlock()

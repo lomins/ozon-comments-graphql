@@ -11,6 +11,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/lomins/ozon-comments-graphql/config"
 	"github.com/lomins/ozon-comments-graphql/internal/graph"
+	"github.com/lomins/ozon-comments-graphql/internal/graph/model"
 
 	"github.com/lomins/ozon-comments-graphql/pkg/storage"
 )
@@ -40,7 +41,7 @@ func main() {
 	}
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
-		Storage: store,
+		Storage: store, Comments: make(map[string]chan *model.Comment),
 	}}))
 
 	srv.AddTransport(&transport.Websocket{})
