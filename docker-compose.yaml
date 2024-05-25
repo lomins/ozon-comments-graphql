@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=7070
+      - DB_NAME=ozon-comments
+      - APP_STORAGE=postgres
+      # - APP_STORAGE=inmemory
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: ozon-comments
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 7070
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+volumes:
+  db-data:
