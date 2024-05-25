@@ -30,15 +30,13 @@
 ```yaml
 app:
   port: 8080
-  # storage: postgres
-  storage: inmemory
 
 db:
   host: localhost
   port: 5432
   user: postgres
-  password: yourpassword
-  name: yourname
+  password: 7070
+  name: ozon-comments
 ```
 
 ### Запуск приложения
@@ -46,6 +44,10 @@ db:
 #### С использованием Go:
 ```
 go run .\cmd\server\server.go
+```
+
+```
+go run .\cmd\server\server.go --storage postgres
 ```
 
 #### С использованием Docker:
