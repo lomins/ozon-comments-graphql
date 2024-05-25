@@ -7,6 +7,7 @@ type Storage interface {
 	GetPost(id string) (*models.Post, error)
 	CreatePost(post *models.Post) error
 	DisableComments(postID string) (*models.Post, error)
-	GetComments(postID string) ([]*models.Comment, error)
+	GetComments(postID string, limit int, offset int) ([]*models.Comment, error)
+	GetCommentCount(postID string) (int, error)
 	CreateComment(comment *models.Comment) error
 }

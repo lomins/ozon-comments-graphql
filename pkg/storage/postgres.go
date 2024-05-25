@@ -39,12 +39,16 @@ func (s *PostgresStorage) DisableComments(postID string) (*models.Post, error) {
 	return &post, s.DB.Save(&post).Error
 }
 
-func (s *PostgresStorage) GetComments(postID string) ([]*models.Comment, error) {
+func (s *PostgresStorage) GetComments(postID string, limit int, offset int) ([]*models.Comment, error) {
 	var comments []*models.Comment
-	query := s.DB.Where("post_id = ?", postID).Order("created_at ASC")
-
-	err := query.Find(&comments).Error
+	err := s.DB.Where("post_id = ?", postID).Order("created_at ASC").Limit(limit).Offset(offset).Find(&comments).Error
 	return comments, err
+}
+
+func (s *PostgresStorage) GetCommentCount(postID string) (int, error) {
+	var count int
+	err := s.DB.Model(&models.Comment{}).Where("post_id = ?", postID).Count(&count).Error
+	return count, err
 }
 
 func (s *PostgresStorage) CreateComment(comment *models.Comment) error {

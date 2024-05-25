@@ -64,7 +64,7 @@ func (r *mutationResolver) DisableComments(ctx context.Context, postID string) (
 	if err != nil {
 		return nil, err
 	}
-	commentsQL, err := r.Storage.GetComments(postID)
+	commentsQL, err := r.Storage.GetComments(postID, 10, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (r *queryResolver) Posts(ctx context.Context) ([]*model.Post, error) {
 	postsQL := make([]*model.Post, len(postsGorm))
 
 	for i, postGorm := range postsGorm {
-		comments, err := r.Storage.GetComments(postGorm.ID)
+		comments, err := r.Storage.GetComments(postGorm.ID, 10, 0)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +101,7 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 		return nil, err
 	}
 
-	comments, err := r.Storage.GetComments(postGorm.ID)
+	comments, err := r.Storage.GetComments(postGorm.ID, 10, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -111,8 +111,8 @@ func (r *queryResolver) Post(ctx context.Context, id string) (*model.Post, error
 }
 
 // Comments is the resolver for the comments field.
-func (r *queryResolver) Comments(ctx context.Context, postID string) ([]*model.Comment, error) {
-	commentsGorm, err := r.Storage.GetComments(postID)
+func (r *queryResolver) Comments(ctx context.Context, postID string, limit int, offset int) (*model.CommentPage, error) {
+	commentsGorm, err := r.Storage.GetComments(postID, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -123,7 +123,15 @@ func (r *queryResolver) Comments(ctx context.Context, postID string) ([]*model.C
 		commentsQL[i] = models.ToGraphQLComment(commentGorm)
 	}
 
-	return commentsQL, err
+	totalCount, err := r.Storage.GetCommentCount(postID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.CommentPage{
+		Comments:   commentsQL,
+		TotalCount: totalCount,
+	}, nil
 }
 
 // CommentAdded is the resolver for the commentAdded field.
@@ -149,16 +157,3 @@ func (r *Resolver) Subscription() SubscriptionResolver { return &subscriptionRes
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
 type subscriptionResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-// func (r *mutationResolver) CreateTodo(ctx context.Context, input model.NewTodo) (*model.Todo, error) {
-// 	panic(fmt.Errorf("not implemented: CreateTodo - createTodo"))
-// }
-// func (r *queryResolver) Todos(ctx context.Context) ([]*model.Todo, error) {
-// 	panic(fmt.Errorf("not implemented: Todos - todos"))
-// }

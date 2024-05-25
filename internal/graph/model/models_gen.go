@@ -11,6 +11,11 @@ type Comment struct {
 	CreatedAt string     `json:"createdAt"`
 }
 
+type CommentPage struct {
+	Comments   []*Comment `json:"comments"`
+	TotalCount int        `json:"totalCount"`
+}
+
 type Mutation struct {
 }
 
