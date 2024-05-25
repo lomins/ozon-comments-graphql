@@ -1,6 +1,8 @@
 package config
 
 import (
+	"flag"
+
 	"github.com/spf13/viper"
 )
 
@@ -34,4 +36,9 @@ func LoadConfig() (*Config, error) {
 	}
 
 	return &config, nil
+}
+
+func (c *Config) ParseFlags() {
+	flag.StringVar(&c.App.Storage, "storage", "inmemory", "Type of storage to use: inmemory or postgres")
+	flag.Parse()
 }
