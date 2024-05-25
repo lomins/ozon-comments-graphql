@@ -66,7 +66,7 @@ func (s *InMemoryStorage) DisableComments(postID string) (*models.Post, error) {
 	return post, nil
 }
 
-func (s *InMemoryStorage) GetComments(postID string) ([]*models.Comment, error) {
+func (s *InMemoryStorage) GetComments(postID string, limit int, offset int) ([]*models.Comment, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -75,7 +75,28 @@ func (s *InMemoryStorage) GetComments(postID string) ([]*models.Comment, error) 
 		return nil, nil
 	}
 
-	return comments, nil
+	if offset >= len(comments) {
+		return []*models.Comment{}, nil
+	}
+
+	end := offset + limit
+	if end > len(comments) {
+		end = len(comments)
+	}
+
+	return comments[offset:end], nil
+}
+
+func (s *InMemoryStorage) GetCommentCount(postID string) (int, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	comments, exists := s.comments[postID]
+	if !exists {
+		return 0, nil
+	}
+
+	return len(comments), nil
 }
 
 func (s *InMemoryStorage) CreateComment(comment *models.Comment) error {

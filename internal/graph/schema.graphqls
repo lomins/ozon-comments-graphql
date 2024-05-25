@@ -15,10 +15,15 @@ type Comment {
   createdAt: String!
 }
 
+type CommentPage {
+  comments: [Comment!]!
+  totalCount: Int!
+}
+
 type Query {
   posts: [Post!]!
   post(id: ID!): Post
-  comments(postId: ID!): [Comment!]!
+  comments(postId: ID!, limit: Int!, offset: Int!): CommentPage!
 }
 
 type Mutation {
