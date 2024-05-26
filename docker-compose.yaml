@@ -3,18 +3,25 @@ version: '3.8'
 services:
   app:
     build: .
+    restart: always
     ports:
       - "8080:8080"
     depends_on:
       - db
     environment:
+      - STORAGE_TYPE=postgres
       - DB_HOST=db
       - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=7070
       - DB_NAME=ozon-comments
-      # - APP_STORAGE=postgres
-      - APP_STORAGE=inmemory
+      # - DB_HOST=${STORAGE_TYPE
+      # - DB_PORT=5435
+      # - DB_USER=postgres
+      # - DB_PASSWORD=7070
+      # - DB_NAME=ozon-comments
+      # - STORAGE_TYPE=postgres
+      # - STORAGE_TYPE=inmemory
 
   db:
     image: postgres:13
@@ -23,7 +30,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 7070
     ports:
-      - "5432:5432"
+      - "5435:5435"
     volumes:
       - db-data:/var/lib/postgresql/data
 
