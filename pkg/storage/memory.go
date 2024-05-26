@@ -21,6 +21,10 @@ func NewInMemoryStorage() *InMemoryStorage {
 	}
 }
 
+func (s *InMemoryStorage) Close() error {
+	return nil
+}
+
 func (s *InMemoryStorage) GetPosts() ([]*models.Post, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()

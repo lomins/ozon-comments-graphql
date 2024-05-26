@@ -8,7 +8,6 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
-	"github.com/jinzhu/gorm"
 	"github.com/lomins/ozon-comments-graphql/config"
 	"github.com/lomins/ozon-comments-graphql/internal/graph"
 	"github.com/lomins/ozon-comments-graphql/internal/graph/model"
@@ -23,9 +22,25 @@ func main() {
 	}
 	cfg.ParseFlags()
 
-	store, err := initializeStorage(cfg)
-	if err != nil {
-		log.Fatalf("could not initialize storage: %v", err)
+	var store storage.Storage
+
+	switch cfg.App.Storage {
+	case "postgres":
+		dsn := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
+			cfg.DB.Host, cfg.DB.Port, cfg.DB.User, cfg.DB.Name, cfg.DB.Password)
+
+		log.Printf("Storage type: %s", cfg.App.Storage)
+		store, err = storage.NewPostgresStorage(dsn)
+		if err != nil {
+			log.Fatalf("Не удалось подключиться к Postgres: %s", err)
+		}
+		defer store.Close()
+	case "inmemory":
+		log.Printf("Storage type: %s", cfg.App.Storage)
+		store = storage.NewInMemoryStorage()
+	default:
+		log.Printf("unknown storage type: %s, defaulting to inmemory", cfg.App.Storage)
+		store = storage.NewInMemoryStorage()
 	}
 
 	srv := handler.NewDefaultServer(graph.NewExecutableSchema(graph.Config{Resolvers: &graph.Resolver{
@@ -35,27 +50,6 @@ func main() {
 	srv.AddTransport(&transport.Websocket{})
 
 	startServer(cfg.App.Port, srv)
-}
-
-func initializeStorage(cfg *config.Config) (storage.Storage, error) {
-	switch cfg.App.Storage {
-	case "postgres":
-		db, err := gorm.Open("postgres", fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
-			cfg.DB.Host, cfg.DB.Port, cfg.DB.User, cfg.DB.Name, cfg.DB.Password))
-		if err != nil {
-			log.Fatalf("could not connect to the database: %v", err)
-		}
-		defer db.Close()
-
-		log.Printf("storage type: %s", cfg.App.Storage)
-		return storage.NewPostgresStorage(db), nil
-	case "inmemory":
-		log.Printf("storage type: %s", cfg.App.Storage)
-		return storage.NewInMemoryStorage(), nil
-	default:
-		log.Printf("unknown storage type: %s, defaulting to inmemory", cfg.App.Storage)
-		return storage.NewInMemoryStorage(), nil
-	}
 }
 
 func startServer(port int, srv *handler.Server) {
