@@ -3,8 +3,6 @@ package config
 import (
 	"flag"
 
-	"flag"
-
 	"github.com/spf13/viper"
 )
 
