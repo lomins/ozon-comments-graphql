@@ -59,4 +59,7 @@ func startServer(port int, srv *handler.Server) {
 	address := fmt.Sprintf(":%d", port)
 	log.Printf("connect to http://localhost%s/ for GraphQL playground", address)
 	log.Fatal(http.ListenAndServe(address, nil))
+	address := fmt.Sprintf(":%d", port)
+	log.Printf("connect to http://localhost%s/ for GraphQL playground", address)
+	log.Fatal(http.ListenAndServe(address, nil))
 }
