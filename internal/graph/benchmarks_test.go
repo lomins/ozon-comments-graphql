@@ -7,7 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/jinzhu/gorm"
 	_ "github.com/lib/pq"
 	"github.com/lomins/ozon-comments-graphql/pkg/models"
 	"github.com/lomins/ozon-comments-graphql/pkg/storage"
@@ -56,25 +55,23 @@ func BenchmarkCreateCommentInMemory(b *testing.B) {
 }
 
 func BenchmarkCreatePostPostgres(b *testing.B) {
-	db, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=ozon-comments-test password=7070 sslmode=disable")
-	if err != nil {
-		log.Fatalf("could not connect to the database: %v", err)
-	}
-	db.AutoMigrate(&models.Post{}, &models.Comment{})
-	defer db.Close()
+	dsn := "host=localhost port=5432 user=postgres dbname=ozon-comments-test password=7070 sslmode=disable"
 
-	store := storage.NewPostgresStorage(db)
+	store, err := storage.NewPostgresStorage(dsn)
+	if err != nil {
+		log.Fatalf("Не удалось подключиться к Postgres: %s", err)
+	}
+	defer store.Close()
 	benchmarkCreatePost(b, store)
 }
 
 func BenchmarkCreateCommentPostgres(b *testing.B) {
-	db, err := gorm.Open("postgres", "host=localhost port=5432 user=postgres dbname=ozon-comments-test password=7070 sslmode=disable")
-	if err != nil {
-		log.Fatalf("could not connect to the database: %v", err)
-	}
-	db.AutoMigrate(&models.Post{}, &models.Comment{})
-	defer db.Close()
+	dsn := "host=localhost port=5432 user=postgres dbname=ozon-comments-test password=7070 sslmode=disable"
 
-	store := storage.NewPostgresStorage(db)
+	store, err := storage.NewPostgresStorage(dsn)
+	if err != nil {
+		log.Fatalf("Не удалось подключиться к Postgres: %s", err)
+	}
+	defer store.Close()
 	benchmarkCreateComment(b, store)
 }

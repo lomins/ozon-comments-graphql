@@ -10,4 +10,5 @@ type Storage interface {
 	GetComments(postID string, limit int, offset int) ([]*models.Comment, error)
 	GetCommentCount(postID string) (int, error)
 	CreateComment(comment *models.Comment) error
+	Close() error
 }

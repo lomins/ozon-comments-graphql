@@ -12,7 +12,7 @@ type Comment struct {
 	PostID    string
 	ParentID  *string
 	Content   string
-	Children  []*Comment
+	Children  []*Comment `gorm:"foreignkey:ParentID"`
 	CreatedAt time.Time
 }
 
