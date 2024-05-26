@@ -1,16 +1,39 @@
 package storage
 
 import (
-	"github.com/jinzhu/gorm"
+	"fmt"
+
 	"github.com/lomins/ozon-comments-graphql/pkg/models"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type PostgresStorage struct {
 	DB *gorm.DB
 }
 
-func NewPostgresStorage(db *gorm.DB) *PostgresStorage {
-	return &PostgresStorage{DB: db}
+func NewPostgresStorage(dsn string) (*PostgresStorage, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("не удалось подключиться к базе данных: %w", err)
+	}
+
+	err = db.AutoMigrate(models.Post{}, models.Comment{})
+	if err != nil {
+		return nil, fmt.Errorf("не удалось выполнить миграцию: %w", err)
+	}
+	return &PostgresStorage{DB: db}, nil
+}
+
+func (s *PostgresStorage) Close() error {
+	sqlDB, err := s.DB.DB()
+	if err != nil {
+		return fmt.Errorf("не удалось получить объект базы данных: %w", err)
+	}
+	return sqlDB.Close()
 }
 
 func (s *PostgresStorage) GetPosts() ([]*models.Post, error) {
@@ -46,12 +69,19 @@ func (s *PostgresStorage) GetComments(postID string, limit int, offset int) ([]*
 }
 
 func (s *PostgresStorage) GetCommentCount(postID string) (int, error) {
-	var count int
+	var count int64
 	err := s.DB.Model(&models.Comment{}).Where("post_id = ?", postID).Count(&count).Error
-	return count, err
+	return int(count), err
 }
 
 func (s *PostgresStorage) CreateComment(comment *models.Comment) error {
+	if comment.ParentID != nil {
+		var parentComment models.Comment
+		if err := s.DB.First(&parentComment, "id = ?", *comment.ParentID).Error; err != nil {
+			return fmt.Errorf("родительский комментарий не найден: %w", err)
+		}
+	}
+
 	if err := comment.Validate(); err != nil {
 		return err
 	}
